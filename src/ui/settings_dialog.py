@@ -18,11 +18,15 @@ class SettingsDialog(ctk.CTkToplevel):
         self.on_save = on_save
 
         self.title("设置")
-        self.geometry("520x360")
+        self.geometry("520x470")
         self.configure(fg_color="#15171c")
 
-        self.comfy_entry = ctk.CTkEntry(self)
-        self.data_entry = ctk.CTkEntry(self)
+        self.comfy_entry = ctk.CTkEntry(
+            self, placeholder_text="例如: D:\\ComfyUI\\models"
+        )
+        self.data_entry = ctk.CTkEntry(
+            self, placeholder_text="例如: D:\\ComfyModelManager\\data"
+        )
         self.token_entry = ctk.CTkEntry(self, show="*")
         self.comfy_entry.insert(0, comfyui_dir)
         self.data_entry.insert(0, app_data_dir)
@@ -35,21 +39,59 @@ class SettingsDialog(ctk.CTkToplevel):
             pady=(16, 12)
         )
 
+        ctk.CTkLabel(
+            self,
+            text="ComfyUI 模型目录",
+            font=("Fira Sans", 12, "bold"),
+            text_color="#e0e6f1",
+        ).pack(anchor="w", padx=24, pady=(0, 4))
         path_row = ctk.CTkFrame(self, fg_color="#15171c")
-        path_row.pack(fill="x", padx=24, pady=6)
+        path_row.pack(fill="x", padx=24, pady=(0, 4))
         self.comfy_entry.pack(in_=path_row, side="left", fill="x", expand=True)
         ctk.CTkButton(path_row, text="浏览", width=80, command=self._pick_comfy).pack(
             side="left", padx=(8, 0)
         )
+        ctk.CTkLabel(
+            self,
+            text="选择包含模型(checkpoints等)的文件夹",
+            font=("Fira Sans", 11),
+            text_color="#9aa3b2",
+        ).pack(anchor="w", padx=24)
+        self.comfy_error = ctk.CTkLabel(
+            self, text="", font=("Fira Sans", 11), text_color="#d67067"
+        )
+        self.comfy_error.pack(anchor="w", padx=24, pady=(0, 6))
 
+        ctk.CTkLabel(
+            self,
+            text="应用数据目录",
+            font=("Fira Sans", 12, "bold"),
+            text_color="#e0e6f1",
+        ).pack(anchor="w", padx=24, pady=(6, 4))
         data_row = ctk.CTkFrame(self, fg_color="#15171c")
-        data_row.pack(fill="x", padx=24, pady=6)
+        data_row.pack(fill="x", padx=24, pady=(0, 4))
         self.data_entry.pack(in_=data_row, side="left", fill="x", expand=True)
         ctk.CTkButton(data_row, text="浏览", width=80, command=self._pick_data).pack(
             side="left", padx=(8, 0)
         )
+        ctk.CTkLabel(
+            self,
+            text="选择用于缓存与预览的文件夹",
+            font=("Fira Sans", 11),
+            text_color="#9aa3b2",
+        ).pack(anchor="w", padx=24)
+        self.data_error = ctk.CTkLabel(
+            self, text="", font=("Fira Sans", 11), text_color="#d67067"
+        )
+        self.data_error.pack(anchor="w", padx=24, pady=(0, 6))
 
-        self.token_entry.pack(fill="x", padx=24, pady=6)
+        ctk.CTkLabel(
+            self,
+            text="Hugging Face Token",
+            font=("Fira Sans", 12, "bold"),
+            text_color="#e0e6f1",
+        ).pack(anchor="w", padx=24, pady=(6, 4))
+        self.token_entry.pack(fill="x", padx=24, pady=(0, 6))
 
         ctk.CTkButton(
             self,
@@ -62,20 +104,40 @@ class SettingsDialog(ctk.CTkToplevel):
     def _pick_comfy(self) -> None:
         folder = filedialog.askdirectory()
         if folder:
-            self.comfy_entry.delete(0, "end")
-            self.comfy_entry.insert(0, folder)
+            self._apply_directory(self.comfy_entry, self.comfy_error, folder)
 
     def _pick_data(self) -> None:
         folder = filedialog.askdirectory()
         if folder:
-            self.data_entry.delete(0, "end")
-            self.data_entry.insert(0, folder)
+            self._apply_directory(self.data_entry, self.data_error, folder)
+
+    def _apply_directory(
+        self, entry: ctk.CTkEntry, error_label: ctk.CTkLabel, value: str
+    ) -> None:
+        entry.delete(0, "end")
+        entry.insert(0, value)
+        self._validate_directory(value, error_label)
+
+    def _validate_directory(self, value: str, error_label: ctk.CTkLabel) -> bool:
+        if not value:
+            error_label.configure(text="")
+            return True
+        if not Path(value).is_dir():
+            error_label.configure(text="需要选择文件夹路径。")
+            return False
+        error_label.configure(text="")
+        return True
 
     def _save(self) -> None:
         comfy_dir = self.comfy_entry.get().strip()
         data_dir = self.data_entry.get().strip()
         token = self.token_entry.get().strip()
         if not comfy_dir:
+            self.comfy_error.configure(text="请填写 ComfyUI 模型目录。")
+            return
+        comfy_valid = self._validate_directory(comfy_dir, self.comfy_error)
+        data_valid = self._validate_directory(data_dir, self.data_error)
+        if not comfy_valid or not data_valid:
             return
         if not data_dir:
             data_dir = str(Path("data"))

@@ -84,3 +84,6 @@ $RECYCLE.BIN/
 .turbo/
 .eslintcache
 *.local
+
+# data
+data/
