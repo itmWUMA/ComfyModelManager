@@ -7,7 +7,7 @@ import customtkinter as ctk
 from PIL import Image
 
 from src.models.model_scanner import ModelEntry
-from src.utils.file_utils import file_size_display
+from src.utils.file_utils import file_size_display, list_files, text_hash
 
 
 class ModelDetailDialog(ctk.CTkToplevel):
@@ -15,11 +15,13 @@ class ModelDetailDialog(ctk.CTkToplevel):
         self,
         master,
         model: ModelEntry,
+        app_data_dir: str,
         on_preview: Callable[[ModelEntry], None],
         on_delete: Callable[[ModelEntry], None],
     ) -> None:
         super().__init__(master)
         self.model = model
+        self.app_data_dir = Path(app_data_dir)
         self.on_preview = on_preview
         self.on_delete = on_delete
         self.preview_image = None
@@ -110,9 +112,56 @@ class ModelDetailDialog(ctk.CTkToplevel):
             subprocess.Popen(["xdg-open", str(path)])
 
     def _read_readme(self) -> str:
-        if not self.model.readme:
-            return "README 未找到"
-        path = Path(self.model.readme)
-        if not path.exists():
-            return "README 未找到"
-        return path.read_text(encoding="utf-8", errors="ignore")
+        readme_path, state, diagnostic_path = self._resolve_readme_path()
+        if not readme_path:
+            return self._format_readme_state(state, diagnostic_path)
+        content = readme_path.read_text(encoding="utf-8", errors="ignore")
+        return self._format_readme_state(content, diagnostic_path)
+
+    def _resolve_readme_path(self) -> tuple[Path | None, str, str]:
+        roots: list[Path] = []
+        if self.model.repo_id:
+            roots.append(self.app_data_dir / "readmes" / text_hash(self.model.repo_id))
+        if self.model.readme:
+            roots.append(Path(self.model.readme))
+
+        if not roots:
+            return None, "README 未下载", ""
+
+        last_checked = ""
+        saw_existing_root = False
+        for root in roots:
+            root = Path(str(root))
+            if not root.is_absolute() and (self.app_data_dir / root).exists():
+                root = self.app_data_dir / root
+
+            if not root.exists():
+                last_checked = str(root)
+                continue
+            saw_existing_root = True
+            if root.is_file():
+                if root.name.lower() == "readme.md":
+                    return root, "", str(root)
+                last_checked = str(root)
+                continue
+            readme_path = self._find_readme_file(root)
+            if readme_path:
+                return readme_path, "", str(readme_path)
+            last_checked = str(root)
+
+        if saw_existing_root:
+            return None, "已下载但未找到 README", last_checked
+        return None, "README 未下载", last_checked
+
+    def _find_readme_file(self, root: Path) -> Path | None:
+        if not root.is_dir():
+            return None
+        candidates = [path for path in list_files(root) if path.name.lower() == "readme.md"]
+        if not candidates:
+            return None
+        return sorted(candidates, key=lambda item: str(item))[0]
+
+    def _format_readme_state(self, content: str, diagnostic_path: str) -> str:
+        if diagnostic_path:
+            return f"{content}\n\n诊断: 已检查 {diagnostic_path}"
+        return content

@@ -23,6 +23,8 @@ class DownloadDialog(ctk.CTkToplevel):
         master,
         model_types: List[str],
         base_models: List[str],
+        selected_type: str,
+        selected_base: str,
         token: str,
         models_root: Path,
         app_data_dir: Path,
@@ -50,6 +52,10 @@ class DownloadDialog(ctk.CTkToplevel):
         self.filename_entry = ctk.CTkEntry(self, placeholder_text="文件名")
         self.type_option = ctk.CTkOptionMenu(self, values=model_types)
         self.base_option = ctk.CTkOptionMenu(self, values=base_models)
+        if selected_type in model_types:
+            self.type_option.set(selected_type)
+        if selected_base in base_models:
+            self.base_option.set(selected_base)
 
         self._build()
 

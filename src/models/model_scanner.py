@@ -56,9 +56,23 @@ class ModelScanner:
 
     def _apply_metadata(self, entry: ModelEntry) -> None:
         metadata = self.config.models_metadata.get(entry.relative_path)
-        if not metadata:
+        if metadata:
+            entry.repo_id = metadata.get("repo_id", "")
+            entry.filename = metadata.get("filename", "")
+            entry.preview = metadata.get("preview", "")
+            entry.readme = metadata.get("readme", "")
             return
-        entry.repo_id = metadata.get("repo_id", "")
-        entry.filename = metadata.get("filename", "")
-        entry.preview = metadata.get("preview", "")
-        entry.readme = metadata.get("readme", "")
+
+        fallback = self._find_metadata_by_filename(entry.name)
+        if not fallback:
+            return
+        entry.repo_id = fallback.get("repo_id", "")
+        entry.filename = fallback.get("filename", "")
+        entry.preview = fallback.get("preview", "")
+        entry.readme = fallback.get("readme", "")
+
+    def _find_metadata_by_filename(self, filename: str) -> Dict[str, str] | None:
+        for metadata in self.config.models_metadata.values():
+            if metadata.get("filename") == filename:
+                return metadata
+        return None

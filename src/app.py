@@ -134,6 +134,8 @@ class ComfyModelManagerApp:
             self.root,
             [item["id"] for item in self.config.model_types],
             self.config.base_models,
+            self.selected_type,
+            self.selected_base,
             self.config.hf_token,
             Path(self.config.comfyui_models_dir),
             Path(self.config.app_data_dir),
@@ -170,6 +172,7 @@ class ComfyModelManagerApp:
         dialog = ModelDetailDialog(
             self.root,
             model,
+            self.config.app_data_dir,
             self._update_preview,
             self._delete_model,
         )
