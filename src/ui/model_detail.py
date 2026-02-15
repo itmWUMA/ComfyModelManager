@@ -1,0 +1,118 @@
+import os
+import subprocess
+from pathlib import Path
+from typing import Callable
+
+import customtkinter as ctk
+from PIL import Image
+
+from src.models.model_scanner import ModelEntry
+from src.utils.file_utils import file_size_display
+
+
+class ModelDetailDialog(ctk.CTkToplevel):
+    def __init__(
+        self,
+        master,
+        model: ModelEntry,
+        on_preview: Callable[[ModelEntry], None],
+        on_delete: Callable[[ModelEntry], None],
+    ) -> None:
+        super().__init__(master)
+        self.model = model
+        self.on_preview = on_preview
+        self.on_delete = on_delete
+        self.preview_image = None
+
+        self.title("模型详情")
+        self.geometry("820x620")
+        self.configure(fg_color="#121419")
+
+        self._build()
+
+    def _build(self) -> None:
+        header = ctk.CTkLabel(
+            self,
+            text=self.model.name,
+            font=("Fira Sans", 18, "bold"),
+        )
+        header.pack(pady=(16, 8))
+
+        content = ctk.CTkFrame(self, fg_color="#1a1d23", corner_radius=16)
+        content.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+
+        left = ctk.CTkFrame(content, fg_color="#111318", corner_radius=14)
+        left.pack(side="left", fill="y", padx=16, pady=16)
+
+        preview_label = ctk.CTkLabel(left, text="预览图")
+        preview_label.pack(padx=12, pady=12)
+
+        if self.model.preview:
+            path = Path(self.model.preview)
+            if path.exists():
+                image = Image.open(path)
+                image.thumbnail((280, 280))
+                self.preview_image = ctk.CTkImage(image, size=image.size)
+                preview_label.configure(image=self.preview_image, text="")
+
+        info_frame = ctk.CTkFrame(content, fg_color="#1a1d23")
+        info_frame.pack(side="left", fill="both", expand=True, padx=(0, 16), pady=16)
+
+        info_text = (
+            f"文件名: {self.model.name}\n"
+            f"大小: {file_size_display(self.model.size_bytes)}\n"
+            f"类型: {self.model.model_type}\n"
+            f"基底模型: {self.model.base_model}\n"
+            f"路径: {self.model.absolute_path}"
+        )
+        ctk.CTkLabel(info_frame, text=info_text, justify="left").pack(
+            anchor="w", padx=12, pady=(12, 8)
+        )
+
+        readme_text = self._read_readme()
+        readme_box = ctk.CTkTextbox(info_frame, wrap="word", height=220)
+        readme_box.insert("1.0", readme_text)
+        readme_box.configure(state="disabled")
+        readme_box.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+
+        actions = ctk.CTkFrame(self, fg_color="#121419")
+        actions.pack(fill="x", padx=16, pady=(0, 16))
+
+        ctk.CTkButton(
+            actions,
+            text="更换预览图",
+            fg_color="#3d5a80",
+            hover_color="#5374a6",
+            command=lambda: self.on_preview(self.model),
+        ).pack(side="left", padx=6)
+
+        ctk.CTkButton(
+            actions,
+            text="打开目录",
+            fg_color="#2f3e46",
+            hover_color="#3d4f59",
+            command=self._open_folder,
+        ).pack(side="left", padx=6)
+
+        ctk.CTkButton(
+            actions,
+            text="删除模型",
+            fg_color="#9e2a2b",
+            hover_color="#bc4749",
+            command=lambda: self.on_delete(self.model),
+        ).pack(side="right", padx=6)
+
+    def _open_folder(self) -> None:
+        path = Path(self.model.absolute_path).parent
+        if os.name == "nt":
+            subprocess.Popen(["explorer", str(path)])
+        elif os.name == "posix":
+            subprocess.Popen(["xdg-open", str(path)])
+
+    def _read_readme(self) -> str:
+        if not self.model.readme:
+            return "README 未找到"
+        path = Path(self.model.readme)
+        if not path.exists():
+            return "README 未找到"
+        return path.read_text(encoding="utf-8", errors="ignore")
