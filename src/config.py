@@ -18,14 +18,18 @@ DEFAULT_MODEL_TYPES = [
 DEFAULT_BASE_MODELS = ["SD 1.5", "SDXL", "FLUX", "SD 3.x", "Kolors", "HunyuanDiT"]
 
 
-def _default_app_data_dir() -> Path:
-    return Path("data")
+def default_app_data_dir() -> Path:
+    return Path.home() / ".comfy-model-manager" / "data"
+
+
+def default_config_path() -> Path:
+    return default_app_data_dir() / "config.json"
 
 
 @dataclass
 class AppConfig:
     comfyui_models_dir: str = ""
-    app_data_dir: str = str(_default_app_data_dir())
+    app_data_dir: str = str(default_app_data_dir())
     hf_token: str = ""
     model_types: List[Dict[str, str]] = field(default_factory=lambda: list(DEFAULT_MODEL_TYPES))
     base_models: List[str] = field(default_factory=lambda: list(DEFAULT_BASE_MODELS))
@@ -45,7 +49,7 @@ class AppConfig:
     def from_dict(cls, payload: Dict) -> "AppConfig":
         config = cls()
         config.comfyui_models_dir = payload.get("comfyui_models_dir", "")
-        config.app_data_dir = payload.get("app_data_dir", str(_default_app_data_dir()))
+        config.app_data_dir = payload.get("app_data_dir", str(default_app_data_dir()))
         config.hf_token = payload.get("hf_token", "")
         config.model_types = payload.get("model_types", list(DEFAULT_MODEL_TYPES))
         config.base_models = payload.get("base_models", list(DEFAULT_BASE_MODELS))

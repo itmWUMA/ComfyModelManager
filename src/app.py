@@ -5,7 +5,7 @@ from typing import List
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 
-from src.config import AppConfig, ConfigManager
+from src.config import AppConfig, ConfigManager, default_config_path
 from src.models.model_scanner import ModelEntry, ModelScanner
 from src.ui.download_dialog import DownloadDialog, DownloadResult
 from src.ui.model_detail import ModelDetailDialog
@@ -25,7 +25,7 @@ class ComfyModelManagerApp:
         self.root.geometry("1200x780")
         self.root.configure(fg_color="#0b0c10")
 
-        self.config_manager = ConfigManager(Path("data") / "config.json")
+        self.config_manager = ConfigManager(default_config_path())
         self.config = self.config_manager.load()
 
         self.selected_type = self.config.model_types[0]["id"]
@@ -35,6 +35,7 @@ class ComfyModelManagerApp:
         self.topbar = None
         self.grid = None
         self._last_download_repo = ""
+        self._settings_dialog = None
 
         self._build_layout()
         self._load_models()
@@ -84,13 +85,22 @@ class ComfyModelManagerApp:
             self.topbar._select(self.selected_base)
 
     def _open_settings(self) -> None:
-        SettingsDialog(
+        if self._settings_dialog and self._settings_dialog.winfo_exists():
+            self._settings_dialog.lift()
+            self._settings_dialog.focus_force()
+            return
+        self._settings_dialog = SettingsDialog(
             self.root,
             self.config.comfyui_models_dir,
             self.config.app_data_dir,
             self.config.hf_token,
             self._save_settings,
+            self._on_settings_closed,
         )
+        self._settings_dialog.grab_set()
+
+    def _on_settings_closed(self) -> None:
+        self._settings_dialog = None
 
     def _save_settings(self, comfy_dir: str, app_data_dir: str, token: str) -> None:
         self.config.comfyui_models_dir = comfy_dir
