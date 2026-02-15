@@ -37,6 +37,8 @@ class TestAppConfig(unittest.TestCase):
             self.assertIn("rel", config.models_metadata)
             config.set_preview("rel", "preview.png")
             self.assertEqual(config.models_metadata["rel"]["preview"], "preview.png")
+            config.set_notes("rel", "用途说明")
+            self.assertEqual(config.models_metadata["rel"]["notes"], "用途说明")
 
 
 class TestConfigManager(unittest.TestCase):

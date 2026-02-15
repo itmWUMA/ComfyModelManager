@@ -28,6 +28,7 @@ class TestModelScanner(unittest.TestCase):
                 "filename": "model.safetensors",
                 "preview": "preview.png",
                 "readme": "README.md",
+                "notes": "用途提示",
             }
             scanner = ModelScanner(config)
             results = scanner.scan()
@@ -37,6 +38,7 @@ class TestModelScanner(unittest.TestCase):
             self.assertEqual(entry.repo_id, "user/repo")
             self.assertEqual(entry.preview, "preview.png")
             self.assertEqual(entry.readme, "README.md")
+            self.assertEqual(entry.notes, "用途提示")
 
 
 if __name__ == "__main__":

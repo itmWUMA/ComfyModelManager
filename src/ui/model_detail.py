@@ -18,13 +18,16 @@ class ModelDetailDialog(ctk.CTkToplevel):
         app_data_dir: str,
         on_preview: Callable[[ModelEntry], None],
         on_delete: Callable[[ModelEntry], None],
+        on_save_notes: Callable[[ModelEntry, str], None],
     ) -> None:
         super().__init__(master)
         self.model = model
         self.app_data_dir = Path(app_data_dir)
         self.on_preview = on_preview
         self.on_delete = on_delete
+        self.on_save_notes = on_save_notes
         self.preview_image = None
+        self.notes_box = None
 
         self.title("模型详情")
         self.geometry("820x620")
@@ -77,8 +80,23 @@ class ModelDetailDialog(ctk.CTkToplevel):
         readme_box.configure(state="disabled")
         readme_box.pack(fill="both", expand=True, padx=12, pady=(0, 12))
 
+        notes_label = ctk.CTkLabel(info_frame, text="用途提示")
+        notes_label.pack(anchor="w", padx=12, pady=(0, 6))
+
+        self.notes_box = ctk.CTkTextbox(info_frame, wrap="word", height=90)
+        self.notes_box.insert("1.0", self.model.notes)
+        self.notes_box.pack(fill="x", padx=12, pady=(0, 12))
+
         actions = ctk.CTkFrame(self, fg_color="#121419")
         actions.pack(fill="x", padx=16, pady=(0, 16))
+
+        ctk.CTkButton(
+            actions,
+            text="保存用途提示",
+            fg_color="#345995",
+            hover_color="#4369ad",
+            command=self._save_notes,
+        ).pack(side="left", padx=6)
 
         ctk.CTkButton(
             actions,
@@ -103,6 +121,12 @@ class ModelDetailDialog(ctk.CTkToplevel):
             hover_color="#bc4749",
             command=lambda: self.on_delete(self.model),
         ).pack(side="right", padx=6)
+
+    def _save_notes(self) -> None:
+        if not self.notes_box:
+            return
+        self.model.notes = self.notes_box.get("1.0", "end").strip()
+        self.on_save_notes(self.model, self.model.notes)
 
     def _open_folder(self) -> None:
         path = Path(self.model.absolute_path).parent

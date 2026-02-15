@@ -18,6 +18,7 @@ class ModelEntry:
     filename: str = ""
     preview: str = ""
     readme: str = ""
+    notes: str = ""
 
 
 class ModelScanner:
@@ -61,6 +62,7 @@ class ModelScanner:
             entry.filename = metadata.get("filename", "")
             entry.preview = metadata.get("preview", "")
             entry.readme = metadata.get("readme", "")
+            entry.notes = metadata.get("notes", "")
             return
 
         fallback = self._find_metadata_by_filename(entry.name)
@@ -70,6 +72,7 @@ class ModelScanner:
         entry.filename = fallback.get("filename", "")
         entry.preview = fallback.get("preview", "")
         entry.readme = fallback.get("readme", "")
+        entry.notes = fallback.get("notes", "")
 
     def _find_metadata_by_filename(self, filename: str) -> Dict[str, str] | None:
         for metadata in self.config.models_metadata.values():

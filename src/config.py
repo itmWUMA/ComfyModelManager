@@ -78,6 +78,13 @@ class AppConfig:
             self.models_metadata[relative_path] = entry
         entry["preview"] = preview_path
 
+    def set_notes(self, relative_path: str, notes: str) -> None:
+        entry = self.models_metadata.get(relative_path)
+        if not entry:
+            entry = {}
+            self.models_metadata[relative_path] = entry
+        entry["notes"] = notes
+
 
 class ConfigManager:
     def __init__(self, config_path: Path) -> None:

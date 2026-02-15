@@ -185,6 +185,7 @@ class ComfyModelManagerApp:
             self.config.app_data_dir,
             self._update_preview,
             self._delete_model,
+            self._save_notes,
         )
         dialog.grab_set()
 
@@ -219,3 +220,7 @@ class ComfyModelManagerApp:
             self.config.models_metadata.pop(model.relative_path)
             self.config_manager.save()
         self._load_models()
+
+    def _save_notes(self, model: ModelEntry, notes: str) -> None:
+        self.config.set_notes(model.relative_path, notes)
+        self.config_manager.save()
