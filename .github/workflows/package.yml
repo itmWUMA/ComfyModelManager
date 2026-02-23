@@ -30,7 +30,7 @@ jobs:
 
       - name: Build exe
         run: |
-          pyinstaller --onefile --name ComfyModelManager main.py
+          scripts\package.bat
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
