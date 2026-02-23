@@ -5,14 +5,22 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
+MODEL_DIR_CHECKPOINTS = "checkpoints"
+MODEL_DIR_LORAS = "loras"
+MODEL_DIR_VAE = "vae"
+MODEL_DIR_CONTROLNET = "controlnet"
+MODEL_DIR_CLIP = "clip"
+MODEL_DIR_UPSCALE = "upscale_models"
+MODEL_DIR_EMBEDDINGS = "embeddings"
+
 DEFAULT_MODEL_TYPES = [
-    {"id": "checkpoints", "label": "Checkpoint"},
-    {"id": "loras", "label": "LoRA"},
-    {"id": "vae", "label": "VAE"},
-    {"id": "controlnet", "label": "ControlNet"},
-    {"id": "clip", "label": "CLIP"},
-    {"id": "upscaler", "label": "Upscaler"},
-    {"id": "embedding", "label": "Embedding"},
+    {"id": MODEL_DIR_CHECKPOINTS, "label": "Checkpoint"},
+    {"id": MODEL_DIR_LORAS, "label": "LoRA"},
+    {"id": MODEL_DIR_VAE, "label": "VAE"},
+    {"id": MODEL_DIR_CONTROLNET, "label": "ControlNet"},
+    {"id": MODEL_DIR_CLIP, "label": "CLIP"},
+    {"id": MODEL_DIR_UPSCALE, "label": "Upscaler"},
+    {"id": MODEL_DIR_EMBEDDINGS, "label": "Embedding"},
 ]
 
 DEFAULT_BASE_MODELS = ["SD 1.5", "SDXL", "FLUX", "SD 3.x", "Kolors", "HunyuanDiT"]
